@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ניטור פעילות מוחית בזמן אמת</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #fff;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            font-size: 2.5em;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .section {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 25px;
+            border: 1px solid rgba(255,255,255,0.2);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+        
+        .section h2 {
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .step-number {
+            background: rgba(255,255,255,0.3);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        
+        .feature {
+            display: flex;
+            align-items: start;
+            gap: 15px;
+            margin: 15px 0;
+            padding: 15px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+        }
+        
+        .feature-icon {
+            font-size: 1.5em;
+            min-width: 30px;
+        }
+        
+        .video-container {
+            position: relative;
+            padding-bottom: 56.25%;
+            height: 0;
+            overflow: hidden;
+            border-radius: 15px;
+            margin: 20px 0;
+        }
+        
+        .video-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        
+        .cta-button {
+            display: block;
+            width: 100%;
+            max-width: 400px;
+            margin: 30px auto;
+            padding: 20px 40px;
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #fff;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+        }
+        
+        .monitor-screen {
+            display: none;
+            background: rgba(0,0,0,0.8);
+            padding: 30px;
+            border-radius: 20px;
+            margin-top: 30px;
+        }
+        
+        .monitor-screen.active {
+            display: block;
+        }
+        
+        .monitor-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid rgba(255,255,255,0.2);
+        }
+        
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            background: #00ff00;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .stress-level {
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .stress-value {
+            font-size: 4em;
+            font-weight: bold;
+            color: #4ade80;
+            text-shadow: 0 0 20px rgba(74, 222, 128, 0.5);
+        }
+        
+        .stress-label {
+            font-size: 1.2em;
+            opacity: 0.8;
+            margin-top: 10px;
+        }
+        
+        .graph-container {
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            height: 250px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .graph-canvas {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .brain-waves {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .wave-type {
+            background: rgba(255,255,255,0.05);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .wave-name {
+            font-size: 0.9em;
+            opacity: 0.7;
+            margin-bottom: 5px;
+        }
+        
+        .wave-value {
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .image-placeholder {
+            width: 100%;
+            max-width: 400px;
+            margin: 20px auto;
+            display: block;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧠 ניטור פעילות מוחית בזמן אמת</h1>
+        
+        <div id="instructions">
+            <div class="section">
+                <h2>
+                    <span class="step-number">1</span>
+                    חברו את האוזניות האלחוטיות שלכם
+                </h2>
+                <div style="text-align: center; margin: 20px 0;">
+                    <div style="font-size: 5em;">🎧</div>
+                </div>
+                <div class="feature">
+                    <span class="feature-icon">✅</span>
+                    <div>
+                        <strong>חיבור האוזניות מאפשר לקרוא את פעילות המוח שלכם</strong> בדיוק גבוה באמצעות טכנולוגיית EEG מתקדמת.
+                    </div>
+                </div>
+                <div class="feature">
+                    <span class="feature-icon">✅</span>
+                    <div>
+                        <strong>הטכנולוגיה שולחת פולסים עדינים</strong> דרך האוזניות, והמוח מחזיר תגובות חשמליות שנמדדות ומנותחות בזמן אמת.
+                    </div>
+                </div>
+                <div class="feature">
+                    <span class="feature-icon">✅</span>
+                    <div>
+                        <strong>תוכלו לראות את הפעילות המוחית שלכם</strong> מוצגת בגרפים מדויקים ולעקוב אחר שינויים ברמות הלחץ והרוגע.
+                    </div>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2>
+                    <span class="step-number">2</span>
+                    הפעילו את הסרטון ושמעו את הצלילים
+                </h2>
+                <div class="video-container">
+                    <iframe src="https://www.youtube.com/embed/lTRiuFIWV54" allowfullscreen allow="autoplay"></iframe>
+                </div>
+                <div class="feature">
+                    <span class="feature-icon">✅</span>
+                    <div>
+                        <strong>הסאונד יוצר נקודת יחוס נוירולוגית</strong> המאפשרת למערכת לכייל את הקריאה ולזהות דפוסי גלי מוח בצורה מדויקת יותר.
+                    </div>
+                </div>
+                <div class="feature">
+                    <span class="feature-icon">✅</span>
+                    <div>
+                        <strong>התדרים המיוחדים בסרטון</strong> מסונכרנים עם מערכת הניטור ומאפשרים מעקב רציף אחר שינויים במצב המוחי.
+                    </div>
+                </div>
+                <div class="feature">
+                    <span class="feature-icon">✅</span>
+                    <div>
+                        <strong>חשוב להאזין עם אוזניות אלחוטיות בלבד!</strong> כך הקריאה תהיה מדויקת וללא הפרעות חיצוניות.
+                    </div>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2>
+                    <span class="step-number">3</span>
+                    התחילו את הניטור
+                </h2>
+                <p style="text-align: center; font-size: 1.2em; margin: 20px 0;">
+                    הביטו במסך, קחו נשימה עמוקה, ולחצו על הכפתור להתחלת ניטור הפעילות המוחית שלכם
+                </p>
+                <button class="cta-button" onclick="startMonitoring()">
+                    🎯 התחל ניטור מוחי עכשיו
+                </button>
+            </div>
+        </div>
+        
+        <div id="monitor" class="monitor-screen">
+            <div class="monitor-header">
+                <div class="status-indicator">
+                    <span class="status-dot"></span>
+                    <span>מחובר ופעיל</span>
+                </div>
+                <div>
+                    <span id="timer">00:00</span>
+                </div>
+            </div>
+            
+            <div class="stress-level">
+                <div class="stress-value" id="stressValue">85</div>
+                <div class="stress-label">רמת לחץ נוכחית</div>
+            </div>
+            
+            <div class="graph-container">
+                <canvas id="graphCanvas" class="graph-canvas"></canvas>
+            </div>
+            
+            <div class="brain-waves">
+                <div class="wave-type">
+                    <div class="wave-name">גלי אלפא</div>
+                    <div class="wave-value" id="alpha">12.4</div>
+                </div>
+                <div class="wave-type">
+                    <div class="wave-name">גלי בטא</div>
+                    <div class="wave-value" id="beta">18.7</div>
+                </div>
+                <div class="wave-type">
+                    <div class="wave-name">גלי תטא</div>
+                    <div class="wave-value" id="theta">8.2</div>
+                </div>
+                <div class="wave-type">
+                    <div class="wave-name">גלי דלתא</div>
+                    <div class="wave-value" id="delta">3.5</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let monitoringActive = false;
+        let stressLevel = 85;
+        let startTime;
+        let timerInterval;
+        let graphData = [];
+        let canvas, ctx;
+        
+        function startMonitoring() {
+            document.getElementById('instructions').classList.add('hidden');
+            document.getElementById('monitor').classList.add('active');
+            monitoringActive = true;
+            startTime = Date.now();
+            
+            canvas = document.getElementById('graphCanvas');
+            ctx = canvas.getContext('2d');
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+            
+            for (let i = 0; i < canvas.width; i++) {
+                graphData.push(stressLevel);
+            }
+            
+            startTimer();
+            updateStress();
+            drawGraph();
+        }
+        
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                const minutes = Math.floor(elapsed / 60);
+                const seconds = elapsed % 60;
+                document.getElementById('timer').textContent = 
+                    `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            }, 1000);
+        }
+        
+        function updateStress() {
+            if (!monitoringActive) return;
+            
+            const decrease = Math.random() * 0.3 + 0.1;
+            stressLevel = Math.max(20, stressLevel - decrease);
+            
+            document.getElementById('stressValue').textContent = Math.round(stressLevel);
+            
+            const alpha = (12 + Math.random() * 2 + (85 - stressLevel) * 0.05).toFixed(1);
+            const beta = (18 - Math.random() * 2 - (85 - stressLevel) * 0.03).toFixed(1);
+            const theta = (8 + Math.random() * 1.5 + (85 - stressLevel) * 0.02).toFixed(1);
+            const delta = (3.5 + Math.random() * 1 + (85 - stressLevel) * 0.01).toFixed(1);
+            
+            document.getElementById('alpha').textContent = alpha;
+            document.getElementById('beta').textContent = beta;
+            document.getElementById('theta').textContent = theta;
+            document.getElementById('delta').textContent = delta;
+            
+            const color = stressLevel > 60 ? '#f87171' : stressLevel > 40 ? '#fbbf24' : '#4ade80';
+            document.getElementById('stressValue').style.color = color;
+            document.getElementById('stressValue').style.textShadow = `0 0 20px ${color}80`;
+            
+            graphData.shift();
+            graphData.push(stressLevel);
+            
+            setTimeout(updateStress, 100);
+        }
+        
+        function drawGraph() {
+            if (!monitoringActive) return;
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= 4; i++) {
+                const y = (canvas.height / 4) * i;
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+            
+            const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            gradient.addColorStop(0, '#f87171');
+            gradient.addColorStop(0.5, '#fbbf24');
+            gradient.addColorStop(1, '#4ade80');
+            
+            ctx.strokeStyle = gradient;
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            
+            for (let i = 0; i < graphData.length; i++) {
+                const x = (i / graphData.length) * canvas.width;
+                const y = canvas.height - (graphData[i] / 100) * canvas.height;
+                
+                if (i === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            }
+            
+            ctx.stroke();
+            
+            ctx.fillStyle = gradient;
+            ctx.globalAlpha = 0.2;
+            ctx.lineTo(canvas.width, canvas.height);
+            ctx.lineTo(0, canvas.height);
+            ctx.closePath();
+            ctx.fill();
+            ctx.globalAlpha = 1;
+            
+            requestAnimationFrame(drawGraph);
+        }
+    </script>
+</body>
+</html>
